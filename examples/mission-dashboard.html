@@ -1,0 +1,106 @@
+<!--
+  Mission Control — fleet dashboard template.
+  Demonstrates: resource-driven UI states, @defer for heavy widgets,
+  container queries, safe alignment, tabular numbers, semantic token utilities,
+  the span-vs-div law, @switch exhaustiveness, animate.enter.
+-->
+<main class="mx-auto flex max-w-screen-2xl flex-col gap-6 p-4 md:p-6">
+
+  <!-- Page header — safe centering never amputates buttons on overflow -->
+  <header class="flex flex-wrap items-center justify-between gap-3">
+    <span class="flex flex-col">
+      <span class="font-display text-2xl font-semibold text-color">Fleet Overview</span>
+      <span class="text-muted-color">{{ store.onlineCount() }} satellites online</span>
+    </span>
+    <span class="flex items-center justify-center-safe gap-2">
+      <p-select [options]="orbits" [formField]="filters.orbit" class="w-40" />
+      <input pInputText [formField]="filters.query" placeholder="Search call sign…" class="w-64" />
+      <p-button label="New mission" icon="pi pi-plus" routerLink="/launch" />
+    </span>
+  </header>
+
+  <!-- Stat tiles — container queries: tiles adapt to THEIR width, not viewport -->
+  <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    @for (tile of tiles(); track tile.id) {
+      <p-card class="@container" animate.enter="animate-fade-in-scale">
+        <span class="flex items-center justify-between gap-3">
+          <span class="flex flex-col">
+            <span class="text-muted-color">{{ tile.label }}</span>
+            <span class="font-display text-3xl font-semibold tabular-nums @max-[14rem]:text-2xl">
+              {{ tile.value }}
+            </span>
+          </span>
+          <p-tag [value]="tile.trend" [severity]="tile.trend.startsWith('+') ? 'success' : 'danger'" />
+        </span>
+      </p-card>
+    }
+  </section>
+
+  <!-- Fleet table — resource states, no hand-rolled isLoading -->
+  <p-card>
+    <ng-template #header>
+      <span class="flex w-full items-center justify-between p-4">
+        <span class="font-medium text-color">Active satellites</span>
+        @if (store.lowFuel().length > 0) {
+          <p-tag severity="warn" [value]="store.lowFuel().length + ' low fuel'"
+            class="animate-telemetry-pulse" />
+        }
+      </span>
+    </ng-template>
+
+    @if (store.fleet.isLoading()) {
+      <p-skeleton height="18rem" />
+    } @else if (store.fleet.error()) {
+      <p-message severity="error">Uplink failed — ground station retrying.</p-message>
+    } @else {
+      <p-table [value]="store.fleet.value()" [paginator]="true" [rows]="25"
+        selectionMode="single" dataKey="id"
+        [pt]="{ bodyRow: 'hover:bg-emphasis transition-colors cursor-pointer' }">
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="name">Satellite</th>
+            <th>Orbit</th>
+            <th>Status</th>
+            <th class="text-end" pSortableColumn="altitudeKm">Altitude</th>
+            <th class="text-end" pSortableColumn="fuelPct">Fuel</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-sat>
+          <tr [pSelectableRow]="sat" (click)="store.selectedId.set(sat.id)">
+            <td>
+              <span class="flex items-center gap-2 font-medium wrap-anywhere">{{ sat.name }}</span>
+            </td>
+            <td><span class="text-muted-color">{{ sat.orbit }}</span></td>
+            <td>
+              @switch (sat.status) {
+                @case ('online')      { <p-tag severity="success" value="Online" /> }
+                @case ('degraded')
+                @case ('maintenance') { <p-tag severity="warn" value="Limited" /> }
+                @case ('offline')     { <p-tag severity="danger" value="Offline" /> }
+                @default never(sat.status)
+              }
+            </td>
+            <td class="text-end"><span class="tabular-nums">{{ sat.altitudeKm }} km</span></td>
+            <td class="text-end">
+              <span class="tabular-nums" [class.text-red-500]="sat.fuelPct < 15">
+                {{ sat.fuelPct }}%
+              </span>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </p-card>
+
+  <!-- Heavy 3D widget — deferred + skipped by incremental hydration until visible -->
+  @defer (on viewport({ rootMargin: '200px' }); prefetch on idle) {
+    <app-orbit-visualizer [fleet]="store.fleet.value()" [selectedId]="store.selectedId()"
+      class="mask-b-from-80% rounded-border" />
+  } @placeholder {
+    <p-skeleton height="24rem" />
+  } @loading (after 100ms; minimum 400ms) {
+    <span class="flex h-96 items-center justify-center"><p-progressspinner /></span>
+  } @error {
+    <p-message severity="warn">3D orbit view unavailable on this device.</p-message>
+  }
+</main>

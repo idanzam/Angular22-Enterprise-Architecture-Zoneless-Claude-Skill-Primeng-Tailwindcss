@@ -1,0 +1,31 @@
+/**
+ * Mission Control — the ONLY stylesheet in the application.
+ * Tailwind CSS 4.3 CSS-first configuration + PrimeNG bridge.
+ * Component .css files exist (CLI generates them) but stay EMPTY.
+ */
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+
+/* Class-based dark mode — same selector as PrimeNG's darkModeSelector */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens → these GENERATE utilities (font-display, 3xl:, animate-*) */
+@theme {
+  --font-display: "Space Grotesk", "Inter", "sans-serif";
+  --breakpoint-3xl: 120rem;
+
+  --animate-telemetry-pulse: telemetry-pulse 2s ease-in-out infinite;
+  --animate-fade-in-scale: fade-in-scale 0.25s ease-out;
+
+  @keyframes telemetry-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+  @keyframes fade-in-scale {
+    0%   { opacity: 0; transform: scale(0.96); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+}
+
+/* Scan UI libraries that carry Tailwind classes in templates (if any) */
+/* @source "../node_modules/@corp/ui-lib"; */

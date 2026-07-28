@@ -1,0 +1,97 @@
+<!--
+  Mission Control — launch form template.
+  Note the layout law: spans (not divs) inside PrimeNG; Tailwind owns spacing;
+  errors via field signals; p-invalid: variants instead of error CSS.
+-->
+<p-card class="mx-auto max-w-2xl">
+  <ng-template #header>
+    <span class="flex w-full items-center justify-between p-4">
+      <span class="font-display text-xl font-semibold text-color">Schedule Launch</span>
+      <span class="text-muted-color">Window T-72h minimum</span>
+    </span>
+  </ng-template>
+
+  <span class="flex flex-col gap-5">
+
+    <!-- Mission name — async availability check -->
+    <span class="flex flex-col gap-1">
+      <label pLabel for="mission">Mission name</label>
+      <input pInputText id="mission" [formField]="launchForm.mission"
+        [invalid]="launchForm.mission().invalid() && launchForm.mission().touched()"
+        class="p-invalid:border-red-400" placeholder="ARTEMIS-XI" />
+      @if (launchForm.mission().pending()) {
+        <span class="text-muted-color animate-telemetry-pulse">Checking availability…</span>
+      }
+      @if (launchForm.mission().touched() && launchForm.mission().invalid()) {
+        <p-message severity="error" size="small" variant="simple">
+          {{ launchForm.mission().errors()[0]?.message }}
+        </p-message>
+      }
+    </span>
+
+    <span class="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <!-- Launch pad -->
+      <span class="flex flex-col gap-1">
+        <label pLabel for="pad">Launch pad</label>
+        <p-select inputId="pad" [options]="pads.value()" optionLabel="name" optionValue="id"
+          [formField]="launchForm.pad" [loading]="pads.isLoading()" fluid>
+          <ng-template #item let-pad>
+            <span class="flex items-center justify-between gap-3">
+              <span>{{ pad.name }}</span>
+              <span class="text-muted-color">{{ pad.site }}</span>
+            </span>
+          </ng-template>
+        </p-select>
+      </span>
+
+      <!-- Launch window — minDate validated in schema -->
+      <span class="flex flex-col gap-1">
+        <label pLabel for="window">Launch window</label>
+        <p-datepicker inputId="window" [formField]="launchForm.windowStart"
+          [showTime]="true" hourFormat="24" fluid />
+      </span>
+
+      <!-- Contact -->
+      <span class="flex flex-col gap-1">
+        <label pLabel for="email">Flight director email</label>
+        <input pInputText id="email" type="email" [formField]="launchForm.contactEmail"
+          [invalid]="launchForm.contactEmail().invalid() && launchForm.contactEmail().touched()" />
+      </span>
+
+      <!-- Crew -->
+      <span class="flex flex-col gap-1">
+        <label pLabel for="crew">Crew count</label>
+        <p-inputnumber inputId="crew" [formField]="launchForm.crewCount"
+          [min]="0" [max]="7" [showButtons]="true" fluid />
+      </span>
+    </span>
+
+    <!-- Payload toggle + conditional mass field -->
+    <span class="flex items-center gap-3">
+      <p-toggleswitch inputId="payload" [formField]="launchForm.hasPayload" />
+      <label pLabel for="payload">Carries payload</label>
+    </span>
+
+    @if (!launchForm.payloadMassKg().hidden()) {
+      <span class="flex flex-col gap-1" animate.enter="animate-fade-in-scale">
+        <label pLabel for="mass">Payload mass (kg)</label>
+        <p-inputnumber inputId="mass" [formField]="launchForm.payloadMassKg"
+          mode="decimal" suffix=" kg" fluid />
+      </span>
+    }
+
+    <!-- Cross-field envelope error surfaces on crewCount -->
+    @if (launchForm.crewCount().errors()[0]; as err) {
+      <p-message severity="warn">{{ err.message }}</p-message>
+    }
+  </span>
+
+  <ng-template #footer>
+    <span class="flex w-full justify-end gap-2 p-4">
+      <p-button label="Reset" severity="secondary" variant="text" />
+      <p-button label="Schedule launch" icon="pi pi-send" (onClick)="schedule()"
+        [disabled]="launchForm().invalid() || launchForm().submitting()"
+        [loading]="launchForm().submitting()" />
+    </span>
+  </ng-template>
+</p-card>
