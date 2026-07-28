@@ -20,6 +20,25 @@ Read the reference files below **before writing any code**. They are the law of 
 11. `references/architecture.md` — folder structure, signal stores, DI patterns
 12. `references/anti-patterns.md` — everything that gets a PR rejected
 
+## Then Build From Patterns
+
+When implementing a feature, load the matching file(s) from `patterns/`
+(index: `patterns/README.md`) and follow them verbatim — they compose:
+
+- state/store work → `patterns/signal-store.md` + `patterns/httpresource-crud.md`
+- search/filter UIs → `patterns/debounced-search.md`
+- live data → `patterns/polling.md` (default) or `patterns/websocket-stream.md` (earned)
+- forms → `patterns/form-edit-resource.md` / `patterns/form-wizard.md`
+- auth → `patterns/auth-flow.md` · i18n/RTL → `patterns/i18n-rtl.md`
+- theming → `patterns/theme-switching.md` · tables → `patterns/realtime-table.md`
+- dialogs → `patterns/dialog-pattern.md` · shell/nav → `patterns/dashboard-shell.md`
+- ⌘K → `patterns/command-palette.md` · new feature → `patterns/lazy-feature.md`
+  (+ `generators/feature.template.md`)
+
+Before finishing any task, self-review against `anti-patterns/` (index with
+detection greps: `anti-patterns/README.md`) and
+`checklists/code-review-checklist.md`.
+
 ## The Fifteen Non-Negotiables
 
 1. **ZERO RxJS** — no `Observable`, `Subject`, `BehaviorSubject`, `.subscribe()`, `.pipe()`. Reactivity is signals. Async is `async/await`. (`httpResource()` / `resource()` are signal APIs — they are the approved read path.)

@@ -29,8 +29,10 @@
 [Why v22 changes everything](#-why-v22-changes-everything) ·
 [Quick start](#-quick-start) ·
 [The rules](#-the-fifteen-non-negotiables) ·
+[Patterns](#-patterns) ·
+[Anti-patterns](#-anti-patterns) ·
+[Checklists](#-checklists--generators) ·
 [What's new here](#-new-in-this-skill-vs-the-angular-21-edition) ·
-[Reference library](#-reference-library) ·
 [MCP integration](#-mcp-integration)
 
 </div>
@@ -109,7 +111,7 @@ they encode the full PrimeNG↔Tailwind layer contract.
 ├── SKILL.md                               ← Claude skill entry (frontmatter + routing)
 ├── .mcp.json                              ← Angular CLI + PrimeNG + Tailwind MCP servers
 │
-├── references/
+├── references/                            ← 12 deep guides (the theory)
 │   ├── angular22-core.md                  ← v22 facts: defaults, @Service, injectAsync, WebMCP
 │   ├── signals-only.md                    ← zero-RxJS policy + complete migration map
 │   ├── zoneless-onpush.md                 ← the v22 change-detection contract
@@ -121,7 +123,20 @@ they encode the full PrimeNG↔Tailwind layer contract.
 │   ├── primeng-tailwind-integration.md    ← CSS layers, primeui bridge, p-* variants
 │   ├── templates-control-flow.md          ← @switch exhaustiveness, @defer, animate.enter
 │   ├── architecture.md                    ← folders, signal stores, DI, auth, realtime
-│   └── anti-patterns.md                   ← 15 ways to get a PR rejected
+│   └── anti-patterns.md                   ← compact review digest
+│
+├── patterns/                              ← 🎯 15 production patterns (the practice)
+│   └── …                                  ← see the Patterns table below
+│
+├── anti-patterns/                         ← ⛔ 12 detailed anti-patterns + CI detection greps
+│   └── …                                  ← see the Anti-Patterns table below
+│
+├── checklists/
+│   ├── migration-angular21-to-22.md       ← the full 21→22 + PrimeNG 21→22 upgrade path
+│   ├── code-review-checklist.md           ← reviewer's gate, section by section
+│   └── production-readiness.md            ← ship gate: perf, SSR, resilience, security, UX
+│
+├── generators/                            ← CLI-first templates (store / component / feature)
 │
 └── examples/                              ← "Mission Control" — space-ops golden files
     ├── app.config.ts                      ← zoneless + preset + CSS layers
@@ -152,6 +167,72 @@ The full list with rationale lives in [CLAUDE.md](CLAUDE.md). The headlines:
 | 12 | **No `*ngIf`/`NgClass`** | `@if`/`@for` + v22 exhaustive `@switch` |
 | 13–14 | **CLI generates, developer runs** | Claude writes code, never builds/deploys |
 | 15 | **`inject()` only** | `@Service()` + `injectAsync()` for lazy heavy deps |
+
+---
+
+## 🎯 Patterns
+
+Fifteen production-shaped solutions in [`patterns/`](patterns/) — each with
+*when to use*, the exact Angular 22 ingredients, complete code, and hard rules.
+They compose: a real page is typically 3–4 of them.
+
+| Pattern | One-liner |
+|---|---|
+| [signal-store](patterns/signal-store.md) | Service as state container — UI / server / derived / mutations |
+| [httpresource-crud](patterns/httpresource-crud.md) | Resource reads, fetch writes, optimistic updates with rollback |
+| [debounced-search](patterns/debounced-search.md) | `debounced()` + auto-cancelling resource — RxJS search stack, deleted |
+| [websocket-stream](patterns/websocket-stream.md) | `resource({ stream })` with abortSignal cleanup + reconnect backoff |
+| [polling](patterns/polling.md) | The default freshness strategy — visibility-aware `reload()` |
+| [form-edit-resource](patterns/form-edit-resource.md) | Edit form hydrated from a resource via `linkedSignal` |
+| [form-wizard](patterns/form-wizard.md) | Multi-step wizard — one model, one form, per-step subtree validity |
+| [auth-flow](patterns/auth-flow.md) | JWT with single-flight refresh, retry-once, inactivity logout |
+| [i18n-rtl](patterns/i18n-rtl.md) | Dictionary resource + shell gate + logical properties (RTL-proof) |
+| [theme-switching](patterns/theme-switching.md) | Dark mode + runtime brand presets — one class flips everything |
+| [realtime-table](patterns/realtime-table.md) | Live PrimeNG table — dataKey diffing, virtual scroll, flash-on-change |
+| [dialog-pattern](patterns/dialog-pattern.md) | Confirm service, form dialogs, headless Tailwind dialogs |
+| [dashboard-shell](patterns/dashboard-shell.md) | App shell on the NEW PrimeNG 22 compound `p-sidebar` |
+| [command-palette](patterns/command-palette.md) | Global ⌘K with `p-commandmenu` + a command registry store |
+| [lazy-feature](patterns/lazy-feature.md) | Three-layer laziness: routes → `injectAsync()` → `@defer` |
+
+---
+
+## ⛔ Anti-Patterns
+
+Twelve ways to get a PR rejected, in [`anti-patterns/`](anti-patterns/) — each
+with **why it's fatal in Angular 22 specifically** and a CI-ready detection grep.
+
+| Anti-pattern | The crime |
+|---|---|
+| [rxjs-in-signals-world](anti-patterns/rxjs-in-signals-world.md) | `.subscribe()` writing plain fields renders **nothing** under zoneless OnPush |
+| [effect-writes-signals](anti-patterns/effect-writes-signals.md) | `effect()` as derivation — glitch frames; use `computed`/`linkedSignal` |
+| [manual-loading-state](anti-patterns/manual-loading-state.md) | Hand-rolled isLoading/hasError — races `httpResource` already solved |
+| [zone-resurrection](anti-patterns/zone-resurrection.md) | `ChangeDetectorRef`/`NgZone`/`Eager`/zone.js — confessions of non-signal state |
+| [legacy-forms](anti-patterns/legacy-forms.md) | `FormBuilder`/`ngModel`/dead `[control]` syntax in the Signal Forms era |
+| [div-inside-primeng](anti-patterns/div-inside-primeng.md) | Block `<div>` in PrimeNG slots breaks internal flex — `<span>` + display classes |
+| [dead-primeng-api](anti-patterns/dead-primeng-api.md) | `styleClass`/`pTemplate`/`p-dropdown`… — removed API from muscle memory |
+| [css-overrides-ng-deep](anti-patterns/css-overrides-ng-deep.md) | `::ng-deep` + `!important` wars — the token ladder replaced all of it |
+| [legacy-template-syntax](anti-patterns/legacy-template-syntax.md) | `*ngIf`/`NgClass`/`@angular/animations` — forfeits v22 compile-time checks |
+| [websocket-everywhere](anti-patterns/websocket-everywhere.md) | Sockets where polling belongs — cost + fragility for nothing |
+| [frozen-design-decisions](anti-patterns/frozen-design-decisions.md) | Hardcoded colors & physical directions — breaks theming and RTL |
+| [constructor-di-boilerplate](anti-patterns/constructor-di-boilerplate.md) | Constructor injection — signals live in field initializers; `inject()` only |
+
+Plus the workflow file: [manual-files-and-builds](anti-patterns/manual-files-and-builds.md) —
+hand-made files & assistant-run builds.
+
+---
+
+## ✅ Checklists & Generators
+
+- [**Migration: Angular 21 → 22**](checklists/migration-angular21-to-22.md) —
+  the complete ordered path, including PrimeNG 21→22 (license decision, 16px
+  font, removed API sweep) and what to *delete* because it became default.
+- [**Code review checklist**](checklists/code-review-checklist.md) — the
+  reviewer's gate, ordered reactivity → data → forms → PrimeNG → styling →
+  templates → architecture.
+- [**Production readiness**](checklists/production-readiness.md) — ship gate:
+  bundles, hydration, resilience, security (CSP nonce, SRI), dark/RTL passes.
+- [`generators/`](generators/) — CLI-first templates for a store, smart/dumb
+  components, and a complete lazy feature, each ending in its own checklist.
 
 ---
 

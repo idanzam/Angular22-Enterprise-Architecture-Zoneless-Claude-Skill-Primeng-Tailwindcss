@@ -55,6 +55,10 @@ rebuilt for the Angular 22 era (June 2026). Loads as a Claude skill or as a
 | Templates, control flow, animations | `references/templates-control-flow.md` |
 | Folder structure, stores, DI | `references/architecture.md` |
 | What gets a PR rejected | `references/anti-patterns.md` |
+| **Implementing a feature** | the matching `patterns/*.md` (index: `patterns/README.md`) |
+| **Self-review before finishing** | `anti-patterns/README.md` + `checklists/code-review-checklist.md` |
+| Upgrading a 21 codebase | `checklists/migration-angular21-to-22.md` |
+| Scaffolding new code | `generators/*.template.md` |
 
 ## Golden examples
 
